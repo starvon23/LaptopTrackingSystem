@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Laptop Borrowing Management System{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    {% if session.user_id %}
+    <div class="dashboard-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <i class="fas fa-laptop"></i>
+                <h2>LapTrack</h2>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="{{ url_for('dashboard') }}" class="nav-item {% if request.endpoint == 'dashboard' %}active{% endif %}">
+                    <i class="fas fa-th-large"></i>
+                    <span>Dashboard</span>
+                </a>
+                
+                {% if session.role == 'admin' %}
+                <a href="{{ url_for('admin_laptops') }}" class="nav-item {% if request.endpoint in ['admin_laptops', 'laptop_history', 'add_laptop', 'edit_laptop'] %}active{% endif %}">
+                    <i class="fas fa-laptop"></i>
+                    <span>Laptops</span>
+                </a>
+                <a href="{{ url_for('admin_records') }}" class="nav-item {% if request.endpoint == 'admin_records' %}active{% endif %}">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span>Records</span>
+                </a>
+                {% else %}
+                <a href="#available" class="nav-item" onclick="scrollToSection('available')">
+                    <i class="fas fa-laptop"></i>
+                    <span>Borrow</span>
+                </a>
+                <a href="#history" class="nav-item" onclick="scrollToSection('history')">
+                    <i class="fas fa-history"></i>
+                    <span>My History</span>
+                </a>
+                {% endif %}
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="user-details">
+                        <strong>{{ session.name }}</strong>
+                        <span>{{ session.role|capitalize }}</span>
+                    </div>
+                </div>
+                <a href="{{ url_for('logout') }}" class="logout-btn" title="Logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Top Bar -->
+            <header class="topbar">
+                <div class="topbar-left">
+                    <h1>{% block page_title %}Dashboard{% endblock %}</h1>
+                </div>
+                <div class="topbar-right">
+                    <div class="user-badge">
+                        <i class="fas fa-user-circle"></i>
+                        <span>{{ session.name }}</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <div class="content-area">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}" id="alert-{{ loop.index }}">
+                            <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'error' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
+                            <span>{{ message }}</span>
+                            <button class="alert-close" onclick="closeAlert('alert-{{ loop.index }}')">&times;</button>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <!-- Login Page (No Sidebar) -->
+    {% block login_content %}{% endblock %}
+    {% endif %}
+    
+    <script>
+    // Auto-dismiss alerts after 5 seconds
+    document.addEventListener('DOMContentLoaded', function() {
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(function(alert, index) {
+            setTimeout(function() {
+                alert.style.animation = 'slideOut 0.3s ease-out';
+                setTimeout(function() {
+                    alert.remove();
+                }, 300);
+            }, 5000);
+        });
+    });
+    
+    function closeAlert(id) {
+        const alert = document.getElementById(id);
+        if (alert) {
+            alert.style.animation = 'slideOut 0.3s ease-out';
+            setTimeout(function() {
+                alert.remove();
+            }, 300);
+        }
+    }
+    
+    // Smooth scroll to section
+    function scrollToSection(sectionId) {
+        const section = document.getElementById(sectionId);
+        if (section) {
+            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            
+            // Update active nav item
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.target.closest('.nav-item').classList.add('active');
+        }
+    }
+    </script>
+</body>
+</html>

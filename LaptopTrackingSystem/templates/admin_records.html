@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block title %}All Records - Laptop Borrowing Management System{% endblock %}
+{% block page_title %}Borrowing Records{% endblock %}
+
+{% block content %}
+<div class="section">
+    <div class="section-header">
+        <h2><i class="fas fa-clipboard-list"></i> All Borrowing Records</h2>
+        <div class="action-buttons">
+            <button onclick="showFilterModal()" class="btn btn-primary">
+                <i class="fas fa-filter"></i> Filter Records
+            </button>
+        </div>
+    </div>
+    
+    <div class="search-box" style="margin-bottom: 1.5rem;">
+        <i class="fas fa-search"></i>
+        <input type="text" id="searchInput" placeholder="Search by user, laptop, or status..." onkeyup="filterTable()">
+    </div>
+
+    <div class="table-container">
+        <table class="data-table modern-table" id="recordsTable">
+            <thead>
+                <tr>
+                    <th>Record ID</th>
+                    <th>User</th>
+                    <th>Role</th>
+                    <th>Laptop</th>
+                    <th>Borrow Date</th>
+                    <th>Expected Return</th>
+                    <th>Actual Return</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in records %}
+                <tr>
+                    <td><strong>#{{ record.record_id }}</strong></td>
+                    <td>{{ record.user_name }}</td>
+                    <td>
+                        <span class="role-badge role-{{ record.role }}">
+                            <i class="fas fa-{% if record.role == 'student' %}user-graduate{% elif record.role == 'teacher' %}chalkboard-teacher{% else %}user-shield{% endif %}"></i>
+                            {{ record.role|capitalize }}
+                        </span>
+                    </td>
+                    <td><strong>{{ record.brand }} {{ record.model }}</strong></td>
+                    <td>{{ record.borrow_date[:10] }}</td>
+                    <td>{{ record.expected_return_date }}</td>
+                    <td>{{ record.actual_return_date[:10] if record.actual_return_date else '-' }}</td>
+                    <td>
+                        <span class="badge {% if record.status == 'active' %}badge-borrowed{% else %}badge-returned{% endif %}">
+                            <i class="fas fa-{% if record.status == 'active' %}clock{% else %}check-circle{% endif %}"></i>
+                            {{ record.status|capitalize }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Filter Modal -->
+<div id="filterModal" class="modal">
+    <div class="modal-content modal-modern">
+        <span class="close" onclick="closeFilterModal()">&times;</span>
+        <div class="modal-header-modern">
+            <i class="fas fa-filter"></i>
+            <h2>Filter Records</h2>
+        </div>
+        <div class="filter-options">
+            <div class="filter-group">
+                <h4><i class="fas fa-user-tag"></i> By Role</h4>
+                <div class="filter-buttons">
+                    <button class="filter-btn" onclick="filterByRole('all')" data-active="true">
+                        <i class="fas fa-users"></i> All
+                    </button>
+                    <button class="filter-btn" onclick="filterByRole('student')">
+                        <i class="fas fa-user-graduate"></i> Students
+                    </button>
+                    <button class="filter-btn" onclick="filterByRole('teacher')">
+                        <i class="fas fa-chalkboard-teacher"></i> Teachers
+                    </button>
+                </div>
+            </div>
+            
+            <div class="filter-group">
+                <h4><i class="fas fa-info-circle"></i> By Status</h4>
+                <div class="filter-buttons">
+                    <button class="filter-btn" onclick="filterByStatus('all')" data-active="true">
+                        <i class="fas fa-list"></i> All
+                    </button>
+                    <button class="filter-btn" onclick="filterByStatus('active')">
+                        <i class="fas fa-clock"></i> Active
+                    </button>
+                    <button class="filter-btn" onclick="filterByStatus('returned')">
+                        <i class="fas fa-check-circle"></i> Returned
+                    </button>
+                </div>
+            </div>
+        </div>
+        <button onclick="resetFilters()" class="btn btn-secondary" style="width: 100%; margin-top: 1rem;">
+            <i class="fas fa-redo"></i> Reset Filters
+        </button>
+    </div>
+</div>
+
+<script>
+let currentRoleFilter = 'all';
+let currentStatusFilter = 'all';
+
+function filterTable() {
+    const input = document.getElementById('searchInput');
+    const filter = input.value.toLowerCase();
+    const table = document.getElementById('recordsTable');
+    const rows = table.getElementsByTagName('tr');
+
+    for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        const text = row.textContent.toLowerCase();
+        const roleMatch = currentRoleFilter === 'all' || text.includes(currentRoleFilter);
+        const statusMatch = currentStatusFilter === 'all' || text.includes(currentStatusFilter);
+        const searchMatch = text.includes(filter);
+        
+        row.style.display = (roleMatch && statusMatch && searchMatch) ? '' : 'none';
+    }
+}
+
+function showFilterModal() {
+    document.getElementById('filterModal').style.display = 'block';
+}
+
+function closeFilterModal() {
+    document.getElementById('filterModal').style.display = 'none';
+}
+
+function filterByRole(role) {
+    currentRoleFilter = role;
+    updateFilterButtons('role', role);
+    filterTable();
+}
+
+function filterByStatus(status) {
+    currentStatusFilter = status;
+    updateFilterButtons('status', status);
+    filterTable();
+}
+
+function updateFilterButtons(type, value) {
+    const buttons = document.querySelectorAll('.filter-btn');
+    buttons.forEach(btn => {
+        btn.removeAttribute('data-active');
+    });
+    event.target.setAttribute('data-active', 'true');
+}
+
+function resetFilters() {
+    currentRoleFilter = 'all';
+    currentStatusFilter = 'all';
+    document.getElementById('searchInput').value = '';
+    
+    const buttons = document.querySelectorAll('.filter-btn');
+    buttons.forEach(btn => btn.removeAttribute('data-active'));
+    buttons[0].setAttribute('data-active', 'true');
+    buttons[3].setAttribute('data-active', 'true');
+    
+    filterTable();
+    closeFilterModal();
+}
+
+window.onclick = function(event) {
+    const modal = document.getElementById('filterModal');
+    if (event.target == modal) {
+        modal.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}

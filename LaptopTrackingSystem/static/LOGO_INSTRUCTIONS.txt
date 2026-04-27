@@ -1,0 +1,23 @@
+SCHOOL LOGO SETUP INSTRUCTIONS
+================================
+
+To display the Masigonational High School logo on the login page:
+
+1. Save your school logo image as: static/logo.png
+   (The image you provided showing the torch, book, and "1974" emblem)
+
+2. The logo should be in PNG format for best quality with transparency
+
+3. Recommended size: 500x500 pixels or larger (it will be automatically resized)
+
+4. Once you save the logo.png file in the static folder, refresh your browser
+   and the logo will appear on the login page
+
+The login page has been updated with orange/beige colors to match your school's branding:
+- Orange gradient background (#e67e22 to #d35400)
+- Orange accent colors throughout
+- Circular logo display with white background
+- Professional and welcoming design
+
+If you don't have the logo file yet, the system will show a broken image icon
+until you add the logo.png file to the static folder.

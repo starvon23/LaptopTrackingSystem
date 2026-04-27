@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}{{ action }} Laptop - Laptop Borrowing Management System{% endblock %}
+{% block page_title %}{{ action }} Laptop{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+    <a href="{{ url_for('dashboard') }}"><i class="fas fa-home"></i> Dashboard</a>
+    <i class="fas fa-chevron-right"></i>
+    <a href="{{ url_for('admin_laptops') }}"><i class="fas fa-laptop"></i> Laptop Inventory</a>
+    <i class="fas fa-chevron-right"></i>
+    <span>{{ action }} Laptop</span>
+</div>
+
+<section class="section">
+    <h2><i class="fas fa-{% if laptop %}edit{% else %}plus-circle{% endif %}"></i> {{ action }} LAPTOP</h2>
+    
+    <form method="POST" class="laptop-form">
+        <div class="form-row">
+            <div class="form-group">
+                <label><i class="fas fa-building"></i> Brand</label>
+                <input type="text" name="brand" value="{{ laptop.brand if laptop else '' }}" required placeholder="e.g., Dell, HP, Lenovo">
+            </div>
+            
+            <div class="form-group">
+                <label><i class="fas fa-laptop-code"></i> Model</label>
+                <input type="text" name="model" value="{{ laptop.model if laptop else '' }}" required placeholder="e.g., Latitude 5420">
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label><i class="fas fa-info-circle"></i> Status</label>
+            <select name="status" required>
+                <option value="available" {% if laptop and laptop.status == 'available' %}selected{% endif %}>Available</option>
+                <option value="borrowed" {% if laptop and laptop.status == 'borrowed' %}selected{% endif %}>Borrowed</option>
+                <option value="maintenance" {% if laptop and laptop.status == 'maintenance' %}selected{% endif %}>Under Maintenance</option>
+            </select>
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-{% if laptop %}save{% else %}plus{% endif %}"></i> 
+                {{ action }} Laptop
+            </button>
+            <a href="{% if laptop %}{{ url_for('laptop_history', laptop_id=laptop.laptop_id) }}{% else %}{{ url_for('admin_laptops') }}{% endif %}" class="btn btn-secondary">
+                <i class="fas fa-times"></i> Cancel
+            </a>
+        </div>
+    </form>
+</section>
+{% endblock %}

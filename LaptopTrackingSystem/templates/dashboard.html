@@ -1,0 +1,509 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Laptop Borrowing Management System{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+{% if session.role == 'admin' %}
+<!-- Admin Dashboard -->
+<div class="stats-grid">
+    <div class="stat-card stat-card-clickable stat-card-orange" onclick="showStatModal('total')">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);">
+            <i class="fas fa-laptop"></i>
+        </div>
+        <div class="stat-info">
+            <h3>{{ laptops|length }}</h3>
+            <p>Total Laptops</p>
+        </div>
+    </div>
+    <div class="stat-card stat-card-clickable stat-card-green" onclick="showStatModal('available')">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #27ae60 0%, #229954 100%);">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="stat-info">
+            <h3>{{ laptops|selectattr('status', 'equalto', 'available')|list|length }}</h3>
+            <p>Available</p>
+        </div>
+    </div>
+    <div class="stat-card stat-card-clickable stat-card-blue" onclick="showStatModal('borrowed')">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);">
+            <i class="fas fa-hand-holding"></i>
+        </div>
+        <div class="stat-info">
+            <h3>{{ laptops|selectattr('status', 'equalto', 'borrowed')|list|length }}</h3>
+            <p>Borrowed</p>
+        </div>
+    </div>
+    <div class="stat-card stat-card-clickable stat-card-red" onclick="showStatModal('maintenance')">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);">
+            <i class="fas fa-tools"></i>
+        </div>
+        <div class="stat-info">
+            <h3>{{ laptops|selectattr('status', 'equalto', 'maintenance')|list|length }}</h3>
+            <p>Maintenance</p>
+        </div>
+    </div>
+</div>
+
+<div class="section">
+    <div class="section-header">
+        <h2><i class="fas fa-chart-bar"></i> System Overview</h2>
+        <div class="action-buttons">
+            <button onclick="showQuickActionsModal()" class="btn btn-primary">
+                <i class="fas fa-bolt"></i> Quick Actions
+            </button>
+        </div>
+    </div>
+    
+    <div class="overview-grid">
+        <div class="overview-card overview-card-clickable" onclick="showBorrowersModal()">
+            <div class="overview-icon" style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="overview-info">
+                <h4>Active Borrowers</h4>
+                <p class="overview-number">{{ laptops|selectattr('status', 'equalto', 'borrowed')|list|length }}</p>
+                <span class="overview-label">Currently borrowing laptops</span>
+            </div>
+        </div>
+        
+        <div class="overview-card overview-card-clickable" onclick="showUtilizationModal()">
+            <div class="overview-icon" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);">
+                <i class="fas fa-percentage"></i>
+            </div>
+            <div class="overview-info">
+                <h4>Utilization Rate</h4>
+                <p class="overview-number">{{ ((laptops|selectattr('status', 'equalto', 'borrowed')|list|length / laptops|length * 100) if laptops|length > 0 else 0)|round|int }}%</p>
+                <span class="overview-label">Laptops in use</span>
+            </div>
+        </div>
+        
+        <div class="overview-card overview-card-clickable" onclick="showAvailableModal()">
+            <div class="overview-icon" style="background: linear-gradient(135deg, #27ae60 0%, #229954 100%);">
+                <i class="fas fa-check-double"></i>
+            </div>
+            <div class="overview-info">
+                <h4>Available Now</h4>
+                <p class="overview-number">{{ laptops|selectattr('status', 'equalto', 'available')|list|length }}</p>
+                <span class="overview-label">Ready to borrow</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions Modal -->
+<div id="quickActionsModal" class="modal">
+    <div class="modal-content modal-modern">
+        <span class="close" onclick="closeQuickActionsModal()">&times;</span>
+        <div class="modal-header-modern">
+            <i class="fas fa-bolt"></i>
+            <h2>Quick Actions</h2>
+        </div>
+        <div class="quick-actions-grid">
+            <a href="{{ url_for('add_laptop') }}" class="quick-action-card" style="border-left-color: #e67e22;">
+                <i class="fas fa-plus-circle"></i>
+                <h4>Add New Laptop</h4>
+                <p>Register a new laptop to inventory</p>
+            </a>
+            <a href="{{ url_for('admin_laptops') }}" class="quick-action-card" style="border-left-color: #3498db;">
+                <i class="fas fa-laptop"></i>
+                <h4>View All Laptops</h4>
+                <p>Manage laptop inventory</p>
+            </a>
+            <a href="{{ url_for('admin_records') }}" class="quick-action-card" style="border-left-color: #27ae60;">
+                <i class="fas fa-clipboard-list"></i>
+                <h4>View Records</h4>
+                <p>Check borrowing history</p>
+            </a>
+            <a href="#" onclick="showSystemStats(); return false;" class="quick-action-card" style="border-left-color: #9b59b6;">
+                <i class="fas fa-chart-pie"></i>
+                <h4>System Statistics</h4>
+                <p>View detailed analytics</p>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Active Borrowers Modal -->
+<div id="borrowersModal" class="modal">
+    <div class="modal-content modal-modern modal-large">
+        <span class="close" onclick="closeBorrowersModal()">&times;</span>
+        <div class="modal-header-modern" style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);">
+            <i class="fas fa-users"></i>
+            <h2>Active Borrowers</h2>
+        </div>
+        <div class="modal-body-modern">
+            {% if active_borrowers|length > 0 %}
+            <div class="borrowers-list">
+                {% for borrower in active_borrowers %}
+                <div class="borrower-item">
+                    <div class="borrower-avatar" style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="borrower-info">
+                        <h4>{{ borrower.name }}</h4>
+                        <span class="role-badge role-{{ borrower.role }}">
+                            <i class="fas fa-{% if borrower.role == 'student' %}user-graduate{% else %}chalkboard-teacher{% endif %}"></i>
+                            {{ borrower.role|capitalize }}
+                        </span>
+                    </div>
+                    <div class="borrower-laptop">
+                        <p><strong>{{ borrower.brand }} {{ borrower.model }}</strong></p>
+                        <small>Laptop #{{ borrower.laptop_id }}</small>
+                    </div>
+                    <div class="borrower-dates">
+                        <p><i class="fas fa-calendar"></i> {{ borrower.borrow_date[:10] }}</p>
+                        <small>Due: {{ borrower.expected_return_date }}</small>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="fas fa-inbox"></i>
+                <p>No active borrowers at the moment</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Available Laptops Modal -->
+<div id="availableModal" class="modal">
+    <div class="modal-content modal-modern modal-large">
+        <span class="close" onclick="closeAvailableModal()">&times;</span>
+        <div class="modal-header-modern" style="background: linear-gradient(135deg, #27ae60 0%, #229954 100%);">
+            <i class="fas fa-check-double"></i>
+            <h2>Available Laptops</h2>
+        </div>
+        <div class="modal-body-modern">
+            <div class="laptop-modal-grid">
+                {% for laptop in laptops %}
+                    {% if laptop.status == 'available' %}
+                    <div class="laptop-modal-card">
+                        <div class="laptop-modal-icon" style="background: linear-gradient(135deg, #27ae60 0%, #229954 100%);">
+                            <i class="fas fa-laptop"></i>
+                        </div>
+                        <h4>{{ laptop.brand }}</h4>
+                        <p>{{ laptop.model }}</p>
+                        <span class="laptop-modal-id">#{{ laptop.laptop_id }}</span>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Utilization Rate Modal -->
+<div id="utilizationModal" class="modal">
+    <div class="modal-content modal-modern">
+        <span class="close" onclick="closeUtilizationModal()">&times;</span>
+        <div class="modal-header-modern" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);">
+            <i class="fas fa-chart-pie"></i>
+            <h2>Utilization Statistics</h2>
+        </div>
+        <div class="modal-body-modern">
+            <div class="utilization-stats">
+                <div class="util-stat">
+                    <div class="util-icon" style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);">
+                        <i class="fas fa-laptop"></i>
+                    </div>
+                    <div class="util-info">
+                        <h3>{{ laptops|length }}</h3>
+                        <p>Total Laptops</p>
+                    </div>
+                </div>
+                <div class="util-stat">
+                    <div class="util-icon" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);">
+                        <i class="fas fa-hand-holding"></i>
+                    </div>
+                    <div class="util-info">
+                        <h3>{{ laptops|selectattr('status', 'equalto', 'borrowed')|list|length }}</h3>
+                        <p>In Use</p>
+                    </div>
+                </div>
+                <div class="util-stat">
+                    <div class="util-icon" style="background: linear-gradient(135deg, #27ae60 0%, #229954 100%);">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="util-info">
+                        <h3>{{ laptops|selectattr('status', 'equalto', 'available')|list|length }}</h3>
+                        <p>Available</p>
+                    </div>
+                </div>
+            </div>
+            <div class="utilization-chart">
+                <div class="chart-bar">
+                    <div class="chart-fill" style="width: {{ ((laptops|selectattr('status', 'equalto', 'borrowed')|list|length / laptops|length * 100) if laptops|length > 0 else 0)|round|int }}%; background: linear-gradient(90deg, #3498db 0%, #2980b9 100%);"></div>
+                </div>
+                <p class="chart-label">{{ ((laptops|selectattr('status', 'equalto', 'borrowed')|list|length / laptops|length * 100) if laptops|length > 0 else 0)|round|int }}% Utilization Rate</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stat Modals (Total, Available, Borrowed, Maintenance) -->
+<div id="statModal" class="modal">
+    <div class="modal-content modal-modern modal-large">
+        <span class="close" onclick="closeStatModal()">&times;</span>
+        <div id="statModalHeader" class="modal-header-modern">
+            <i id="statModalIcon" class="fas fa-laptop"></i>
+            <h2 id="statModalTitle">Laptops</h2>
+        </div>
+        <div class="modal-body-modern">
+            <div id="statModalContent" class="laptop-modal-grid"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showQuickActionsModal() {
+    document.getElementById('quickActionsModal').style.display = 'block';
+}
+
+function closeQuickActionsModal() {
+    document.getElementById('quickActionsModal').style.display = 'none';
+}
+
+function showBorrowersModal() {
+    document.getElementById('borrowersModal').style.display = 'block';
+}
+
+function closeBorrowersModal() {
+    document.getElementById('borrowersModal').style.display = 'none';
+}
+
+function showAvailableModal() {
+    document.getElementById('availableModal').style.display = 'block';
+}
+
+function closeAvailableModal() {
+    document.getElementById('availableModal').style.display = 'none';
+}
+
+function showUtilizationModal() {
+    document.getElementById('utilizationModal').style.display = 'block';
+}
+
+function closeUtilizationModal() {
+    document.getElementById('utilizationModal').style.display = 'none';
+}
+
+function showStatModal(type) {
+    const modal = document.getElementById('statModal');
+    const header = document.getElementById('statModalHeader');
+    const icon = document.getElementById('statModalIcon');
+    const title = document.getElementById('statModalTitle');
+    const content = document.getElementById('statModalContent');
+    
+    const laptops = {{ laptops|tojson }};
+    let filtered = [];
+    
+    switch(type) {
+        case 'total':
+            filtered = laptops;
+            header.style.background = 'linear-gradient(135deg, #e67e22 0%, #d35400 100%)';
+            icon.className = 'fas fa-laptop';
+            title.textContent = 'All Laptops';
+            break;
+        case 'available':
+            filtered = laptops.filter(l => l.status === 'available');
+            header.style.background = 'linear-gradient(135deg, #27ae60 0%, #229954 100%)';
+            icon.className = 'fas fa-check-circle';
+            title.textContent = 'Available Laptops';
+            break;
+        case 'borrowed':
+            filtered = laptops.filter(l => l.status === 'borrowed');
+            header.style.background = 'linear-gradient(135deg, #3498db 0%, #2980b9 100%)';
+            icon.className = 'fas fa-hand-holding';
+            title.textContent = 'Borrowed Laptops';
+            break;
+        case 'maintenance':
+            filtered = laptops.filter(l => l.status === 'maintenance');
+            header.style.background = 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)';
+            icon.className = 'fas fa-tools';
+            title.textContent = 'Laptops in Maintenance';
+            break;
+    }
+    
+    content.innerHTML = filtered.map(laptop => `
+        <div class="laptop-modal-card">
+            <div class="laptop-modal-icon" style="background: ${header.style.background};">
+                <i class="fas fa-laptop"></i>
+            </div>
+            <h4>${laptop.brand}</h4>
+            <p>${laptop.model}</p>
+            <span class="laptop-modal-id">#${laptop.laptop_id}</span>
+        </div>
+    `).join('');
+    
+    modal.style.display = 'block';
+}
+
+function closeStatModal() {
+    document.getElementById('statModal').style.display = 'none';
+}
+
+function showSystemStats() {
+    alert('System Statistics feature coming soon!');
+    closeQuickActionsModal();
+}
+
+window.onclick = function(event) {
+    const modals = ['quickActionsModal', 'borrowersModal', 'availableModal', 'utilizationModal', 'statModal'];
+    modals.forEach(modalId => {
+        const modal = document.getElementById(modalId);
+        if (event.target == modal) {
+            modal.style.display = 'none';
+        }
+    });
+}
+</script>
+
+{% else %}
+<!-- Student/Teacher Dashboard -->
+<div class="section" id="available">
+    <div class="section-header">
+        <h2><i class="fas fa-laptop"></i> Available Laptops</h2>
+    </div>
+    
+    {% if laptops|selectattr('status', 'equalto', 'available')|list|length > 0 %}
+    <div class="modern-laptop-grid">
+        {% for laptop in laptops %}
+            {% if laptop.status == 'available' %}
+            <div class="modern-laptop-card">
+                <div class="laptop-card-header">
+                    <div class="laptop-card-icon">
+                        <i class="fas fa-laptop"></i>
+                    </div>
+                    <span class="laptop-id">#{{ laptop.laptop_id }}</span>
+                </div>
+                <div class="laptop-card-body">
+                    <h3>{{ laptop.brand }}</h3>
+                    <p>{{ laptop.model }}</p>
+                    <span class="badge badge-available">
+                        <i class="fas fa-check-circle"></i> Available
+                    </span>
+                </div>
+                <div class="laptop-card-footer">
+                    <button class="btn-borrow" data-laptop-id="{{ laptop.laptop_id }}" data-laptop-name="{{ laptop.brand }} {{ laptop.model }}" onclick="showBorrowModal(this)">
+                        <i class="fas fa-hand-holding"></i> Borrow Now
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-inbox"></i>
+        <p>No laptops available at the moment</p>
+    </div>
+    {% endif %}
+</div>
+
+<div class="section" id="history">
+    <div class="section-header">
+        <h2><i class="fas fa-history"></i> My Borrowing History</h2>
+    </div>
+    
+    {% if user_records|length > 0 %}
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Laptop</th>
+                    <th>Borrow Date</th>
+                    <th>Expected Return</th>
+                    <th>Actual Return</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in user_records %}
+                <tr>
+                    <td><strong>{{ record.brand }} {{ record.model }}</strong></td>
+                    <td>{{ record.borrow_date[:10] }}</td>
+                    <td>{{ record.expected_return_date }}</td>
+                    <td>{{ record.actual_return_date[:10] if record.actual_return_date else '-' }}</td>
+                    <td>
+                        <span class="badge {% if record.status == 'active' %}badge-borrowed{% else %}badge-available{% endif %}">
+                            {% if record.status == 'active' %}
+                            <i class="fas fa-clock"></i> Active
+                            {% else %}
+                            <i class="fas fa-check"></i> Returned
+                            {% endif %}
+                        </span>
+                    </td>
+                    <td>
+                        {% if record.status == 'active' %}
+                        <form method="POST" action="{{ url_for('return_laptop') }}" style="display: inline;">
+                            <input type="hidden" name="record_id" value="{{ record.record_id }}">
+                            <button type="submit" class="btn btn-success" onclick="return confirm('Are you sure you want to return this laptop?')">
+                                <i class="fas fa-undo"></i> Return
+                            </button>
+                        </form>
+                        {% else %}
+                        <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-history"></i>
+        <p>You haven't borrowed any laptops yet</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Borrow Modal -->
+<div id="borrowModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeBorrowModal()">&times;</span>
+        <h2><i class="fas fa-laptop"></i> Borrow Laptop</h2>
+        <form method="POST" action="{{ url_for('borrow') }}">
+            <input type="hidden" name="laptop_id" id="borrowLaptopId">
+            <div class="form-group">
+                <label>Laptop:</label>
+                <p id="borrowLaptopName" style="font-weight: 600; color: #2c3e50; font-size: 1.1rem;"></p>
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-calendar-alt"></i> Expected Return Date:</label>
+                <input type="date" name="expected_return_date" required>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%;">
+                <i class="fas fa-check"></i> Confirm Borrow
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+function showBorrowModal(button) {
+    const laptopId = button.getAttribute('data-laptop-id');
+    const laptopName = button.getAttribute('data-laptop-name');
+    document.getElementById('borrowLaptopId').value = laptopId;
+    document.getElementById('borrowLaptopName').textContent = laptopName;
+    document.getElementById('borrowModal').style.display = 'block';
+}
+
+function closeBorrowModal() {
+    document.getElementById('borrowModal').style.display = 'none';
+}
+
+window.onclick = function(event) {
+    const modal = document.getElementById('borrowModal');
+    if (event.target == modal) {
+        modal.style.display = 'none';
+    }
+}
+</script>
+
+{% endif %}
+{% endblock %}

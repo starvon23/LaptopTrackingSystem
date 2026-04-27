@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}Create Account - Laptop Borrowing Management System{% endblock %}
+
+{% block login_content %}
+<div class="login-page">
+    <!-- Left Side - Branding -->
+    <div class="login-left">
+        <div class="login-branding">
+            <div class="school-logo">
+                <img src="{{ url_for('static', filename='mnhs-modified.png') }}" alt="Masigonational High School">
+            </div>
+            <h1>Join Us</h1>
+            <h2>LapTrack System</h2>
+            <p>Create your account to start borrowing laptops</p>
+            <div class="login-features">
+                <div class="feature-item">
+                    <i class="fas fa-user-plus"></i>
+                    <span>Quick Registration</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-laptop"></i>
+                    <span>Easy Access</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Secure Account</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Side - Registration Form -->
+    <div class="login-right">
+        <div class="login-form-container">
+            <div class="login-header">
+                <h3>Create Account</h3>
+                <p>Fill in your details to get started</p>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'error' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
+                        <span>{{ message }}</span>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="{{ url_for('register') }}" class="login-form">
+                <div class="form-group">
+                    <label><i class="fas fa-id-card"></i> Full Name</label>
+                    <input type="text" name="name" required placeholder="Enter your full name" autofocus>
+                </div>
+
+                <div class="form-group">
+                    <label><i class="fas fa-user"></i> Username</label>
+                    <input type="text" name="username" required placeholder="Choose a username">
+                </div>
+
+                <div class="form-group">
+                    <label><i class="fas fa-user-tag"></i> Role</label>
+                    <select name="role" required>
+                        <option value="">Select your role</option>
+                        <option value="student">Student</option>
+                        <option value="teacher">Teacher</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-lock"></i> Password</label>
+                    <input type="password" name="password" required placeholder="Create a password (min. 6 characters)">
+                </div>
+
+                <div class="form-group">
+                    <label><i class="fas fa-lock"></i> Confirm Password</label>
+                    <input type="password" name="confirm_password" required placeholder="Confirm your password">
+                </div>
+                
+                <button type="submit" class="btn-login">
+                    <span>Create Account</span>
+                    <i class="fas fa-user-plus"></i>
+                </button>
+            </form>
+
+            <div class="login-divider">
+                <span>Already have an account?</span>
+            </div>
+
+            <a href="{{ url_for('login') }}" class="btn-secondary-link">
+                <i class="fas fa-sign-in-alt"></i>
+                <span>Sign In</span>
+            </a>
+
+            <div class="login-footer">
+                <p>&copy; 2026 Masico National High School. All rights reserved.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
